@@ -1,0 +1,60 @@
+import json
+import urllib.request
+from urllib.error import HTTPError
+
+VT_API_KEY = "d803ce098bcaa3286b849de7adea4f1ca086cff3ce5ef7cde537d8462dab69a7"
+
+def get_user_input():
+    """Prompt user for file hash, IP, or domain."""
+    query_type = input("Enter query type (hash/ip/domain): ").lower()
+    query = input(f"Enter {query_type}: ")
+    return query_type, query
+
+def get_virus_total_report(query_type, query):
+    """Get trojan information from VirusTotal."""
+    url = f"https://www.virustotal.com/api/v3/intelligence/search?query={query_type}:{query}"
+    headers = {"x-apikey": VT_API_KEY}
+
+    try:
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            return result
+
+    except HTTPError as e:
+        print(f"Error: {e}")
+        return None
+
+def display_trojan_info(report):
+    """Display trojan information in the terminal."""
+    if "data" in report:
+        data = report["data"][0]["attributes"]
+
+        print("Trojan Description:", data.get("description", "N/A"))
+        print("Variants:", data.get("last_analysis_results", "N/A"))
+        print("IOCs:", data.get("last_analysis_results", {}).get("ioc", "N/A"))
+        print("Detection Against Antivirus:", data.get("last_analysis_results", {}).get("engines", "N/A"))
+        print("CVE Name:", data.get("cve", "N/A"))
+        print("CVSS Score:", data.get("cvss", "N/A"))
+        print("Affects:", data.get("affects", "N/A"))
+        print("Precautions:", data.get("precautions", "N/A"))
+        print("Creation Time:", data.get("creation_date", "N/A"))
+        print("Contacted URLs:", data.get("contacted_urls", "N/A"))
+        print("Contacted Domains:", data.get("contacted_domains", "N/A"))
+        print("Contacted IP Addresses:", data.get("contacted_ip_addresses", "N/A"))
+        print("Bundled Files:", data.get("bundled_files", "N/A"))
+        print("Deleted Files:", data.get("deleted_files", "N/A"))
+        print("Affected Processes:", data.get("affected_processes", "N/A"))
+        print("Sandbox Report:", data.get("sandbox_report", "N/A"))
+    else:
+        print("No information found for the given query.")
+
+def main():
+    query_type, query = get_user_input()
+    virus_total_report = get_virus_total_report(query_type, query)
+
+    if virus_total_report:
+        display_trojan_info(virus_total_report)
+
+if __name__ == "__main__":
+    main()
